@@ -43,7 +43,7 @@ export default class Twine {
 
   private incomingQueue: MessageBuffer = new MessageBuffer();
 
-  private _graceful: boolean = false;
+  private _graceful = false;
   // private connClosed: boolean;
 
   constructor(private sock_path: string, private isServer: boolean) { //doesn't make sense to pass isServer. This is determined by startServer or startClient.
@@ -66,9 +66,9 @@ export default class Twine {
     this.conn = await this.server_listener.accept();
 
     // shouldw e not first receive message HI?
-    const first_chunk = new Uint8Array(10);
-    const num = await this.conn.read(first_chunk);
-    const raw = this.decodeMessage(first_chunk); // this is somewhat dangerous given we know chunks can be merged.
+    const firstChunk = new Uint8Array(10);
+    const num = await this.conn.read(firstChunk);
+    const raw = this.decodeMessage(firstChunk); // this is somewhat dangerous given we know chunks can be merged.
     if (raw.service !== protocolService || raw.command !== protocolHi) {
       throw new Error("first message not hi");
     }
@@ -195,7 +195,7 @@ export default class Twine {
       ++offset;
     }
 
-    let pSize = view.getUint16(offset);
+    const pSize = view.getUint16(offset);
     offset += 2;
 
     if (chunk.length < offset + pSize) {
@@ -223,30 +223,30 @@ export default class Twine {
       throw new Error("send: message id is out of bounds");
     }
 
-    let buf = new ArrayBuffer(10);
-    let view = new DataView(buf);
+    const buf = new ArrayBuffer(10);
+    const view = new DataView(buf);
 
     view.setUint8(0, service);
     view.setUint8(1, cmd);
     view.setUint8(2, msgID);
-    let cur_offset = 3;
+    let curOffset = 3;
 
     if (service === refRequestService) {
       if (refMsgID < 1 || refMsgID > 0xff) {
         throw new Error("send: reference message id is out of bounds");
       }
       view.setUint8(3, refMsgID);
-      ++cur_offset;
+      ++curOffset;
     }
 
-    let pSize = payload === undefined ? 0 : payload.length;
+    const pSize = payload === undefined ? 0 : payload.length;
     if (pSize > 0xffff) {
       throw new Error("Twine send: message too big " + pSize);
     }
-    view.setUint16(cur_offset, pSize);
-    cur_offset += 2;
+    view.setUint16(curOffset, pSize);
+    curOffset += 2;
 
-    return new Uint8Array(buf, 0, cur_offset);
+    return new Uint8Array(buf, 0, curOffset);
   }
 
   // read low level functions?
@@ -324,7 +324,7 @@ export default class Twine {
     this.msgReg.unregisterMessage(msgID);
   }
 
-  async replyErrorClose(msgID: number, err_str: string) {
+  async replyErrorClose(msgID: number, errStr: string) {
     this.msgReg.assertMsgIDRange(msgID);
 
     const msgData = this.msgReg.getMessageData(msgID);
@@ -344,7 +344,7 @@ export default class Twine {
       0,
       closeService,
       protocolError,
-      new TextEncoder().encode(err_str),
+      new TextEncoder().encode(errStr),
     ); // cmd is 0 on ok close/err?
 
     this.msgReg.unregisterMessage(msgID);
@@ -437,18 +437,18 @@ export default class Twine {
     cmd: number,
     payload: Uint8Array | undefined,
   ) {
-    const meta_data = Twine.encodeMessageMeta(
+    const metaData = Twine.encodeMessageMeta(
       msgID,
       refMsgID,
       service,
       cmd,
       payload,
     );
-    let full = meta_data;
+    let full = metaData;
     if (payload) {
-      full = new Uint8Array(meta_data.length + (payload ? payload.length : 0));
-      full.set(meta_data, 0);
-      full.set(payload, meta_data.length);
+      full = new Uint8Array(metaData.length + (payload ? payload.length : 0));
+      full.set(metaData, 0);
+      full.set(payload, metaData.length);
     }
 
     if (this.conn) {
@@ -627,8 +627,8 @@ class MessageRegistry {
       has = this.messages.has(this.nextID);
     } while (has);
 
-    let newID = this.nextID;
-    let newMsg = new Msg(service);
+    const newID = this.nextID;
+    const newMsg = new Msg(service);
 
     this.messages.set(newID, newMsg);
 
@@ -645,14 +645,14 @@ class MessageRegistry {
       throw new Error("Message id already registered");
     }
 
-    let newMsg = new Msg(raw.service);
+    const newMsg = new Msg(raw.service);
     this.messages.set(raw.msgID, newMsg);
 
     return newMsg;
   }
 
   closeMessage(msgID: number): Msg {
-    let msgData = this.messages.get(msgID);
+    const msgData = this.messages.get(msgID);
     if (!msgData) {
       throw new Error("message ID not found");
     }
@@ -664,7 +664,7 @@ class MessageRegistry {
     return msgData;
   }
   unregisterMessage(msgID: number) {
-    let msgData = this.messages.get(msgID);
+    const msgData = this.messages.get(msgID);
     if (!msgData) {
       throw new Error("message ID is not registered");
     }
@@ -679,7 +679,7 @@ class MessageRegistry {
     }
   }
   getOpenMessage(msgID: number): Msg {
-    let msgData = this.messages.get(msgID);
+    const msgData = this.messages.get(msgID);
     if (!msgData) {
       throw new Error("message ID not found: %v");
     }
@@ -691,7 +691,7 @@ class MessageRegistry {
     return msgData;
   }
   getMessageData(msgID: number): Msg {
-    let msgData = this.messages.get(msgID);
+    const msgData = this.messages.get(msgID);
     if (!msgData) {
       throw new Error("message ID not found");
     }
@@ -765,12 +765,12 @@ export class Message {
   payload: Uint8Array | undefined;
   msg: Msg | undefined;
 
-  constructor(msg_meta: messageMeta, private t: Twine) {
-    this.msgID = msg_meta.msgID;
-    this.refMsgID = msg_meta.refMsgID;
-    this.service = msg_meta.service;
-    this.command = msg_meta.command;
-    this.payload = msg_meta.payload;
+  constructor(msgMeta: messageMeta, private t: Twine) {
+    this.msgID = msgMeta.msgID;
+    this.refMsgID = msgMeta.refMsgID;
+    this.service = msgMeta.service;
+    this.command = msgMeta.command;
+    this.payload = msgMeta.payload;
   }
 
   async waitReply(): Promise<ReceivedReplyI> {
@@ -818,7 +818,7 @@ export class Message {
     cmd: number,
     payload: Uint8Array | undefined,
   ): Promise<ReceivedReplyI> {
-    let sent = await this.t.refRequest(this.msgID, cmd, payload);
+    const sent = await this.t.refRequest(this.msgID, cmd, payload);
 
     return await sent.waitReply();
   }
@@ -837,7 +837,7 @@ export class Message {
 // TODO: need a way to stop cleanly.
 export class MessageBuffer {
   private buf: ReceivedMessageI[] | undefined;
-  private nextRead: number = 0;
+  private nextRead = 0;
   private _stop = false;
   private resolveMessage:
     | ((r: { value?: ReceivedMessageI; done: boolean }) => void)
@@ -892,8 +892,8 @@ export class MessageBuffer {
 
 type incomingMessage = {
   msg: messageMeta;
-  meta_length: number;
-  payload_remaining: number;
+  metaLength: number;
+  payloadRemaining: number;
 };
 
 // exported only for testing purposes.
@@ -901,9 +901,9 @@ export class BytesToMessages {
   private max_size: number;
   private buf: Uint8Array[];
 
-  private start: number = 0; // first chunk of new data
-  private cur_size: number = 0; // last chunk of new data
-  private byte_offset: number = 0; //position within chunk of next new data
+  private start = 0; // first chunk of new data
+  private cur_size = 0; // last chunk of new data
+  private byte_offset = 0; //position within chunk of next new data
 
   private cur_message: incomingMessage | undefined;
 
@@ -911,7 +911,7 @@ export class BytesToMessages {
     | ((r: { value: messageMeta; done: boolean }) => void)
     | undefined;
 
-  private is_stopped: boolean = false;
+  private is_stopped = false;
 
   constructor() {
     this.max_size = 100; // 100 chunks
@@ -919,8 +919,8 @@ export class BytesToMessages {
   }
 
   push(chunk: Uint8Array) {
-    const next_i = this.nextWriteI();
-    this.buf[next_i] = chunk;
+    const nextI = this.nextWriteI();
+    this.buf[nextI] = chunk;
     ++this.cur_size;
 
     if (this.cur_message === undefined) {
@@ -957,7 +957,7 @@ export class BytesToMessages {
         },
       };
     } else if (
-      this.cur_message !== undefined && this.cur_message.payload_remaining === 0
+      this.cur_message !== undefined && this.cur_message.payloadRemaining === 0
     ) {
       const msg = this.cur_message.msg;
       this.cur_message = undefined;
@@ -978,32 +978,32 @@ export class BytesToMessages {
   decodeNext() {
     if (this.cur_size === 0 || this.cur_message !== undefined) return;
 
-    let cur_chunk = this.buf[this.start];
-    let cur_chunk_size = cur_chunk.byteLength - this.byte_offset;
-    let msg_meta = this.decodeMeta(
-      new DataView(cur_chunk.buffer, this.byte_offset),
+    const curChunk = this.buf[this.start];
+    const curChunkSize = curChunk.byteLength - this.byte_offset;
+    let msgMeta = this.decodeMeta(
+      new DataView(curChunk.buffer, this.byte_offset),
     );
-    if (msg_meta !== undefined) {
-      this.byte_offset += msg_meta.meta_length;
+    if (msgMeta !== undefined) {
+      this.byte_offset += msgMeta.metaLength;
       this.advanceChunk();
     } else if (this.cur_size > 1) { // We didn't get enough data for a message, and there is another chunk available
-      const next_i = this.nextReadI();
-      const next_chunk = this.buf[next_i];
-      const new_buf = new Uint8Array(cur_chunk_size + next_chunk.byteLength);
-      new_buf.set(cur_chunk.slice(this.byte_offset));
-      new_buf.set(next_chunk, cur_chunk_size);
-      msg_meta = this.decodeMeta(new DataView(new_buf.buffer));
-      if (msg_meta === undefined) {
+      const nextI = this.nextReadI();
+      const nextChunk = this.buf[nextI];
+      const newBuf = new Uint8Array(curChunkSize + nextChunk.byteLength);
+      newBuf.set(curChunk.slice(this.byte_offset));
+      newBuf.set(nextChunk, curChunkSize);
+      msgMeta = this.decodeMeta(new DataView(newBuf.buffer));
+      if (msgMeta === undefined) {
         throw new Error("expected two chunks to be enough for a message meta");
       }
 
-      this.start = next_i;
+      this.start = nextI;
       --this.cur_size;
-      this.byte_offset = msg_meta.meta_length - cur_chunk_size; // cur_chunk_size is the previous chunk. This only *looks* wrong.
+      this.byte_offset = msgMeta.metaLength - curChunkSize; // cur_chunk_size is the previous chunk. This only *looks* wrong.
     }
 
-    if (msg_meta !== undefined) {
-      this.cur_message = msg_meta;
+    if (msgMeta !== undefined) {
+      this.cur_message = msgMeta;
       this.pushChunkOnPayload();
     }
   }
@@ -1035,7 +1035,7 @@ export class BytesToMessages {
       offset += 4;
     }
 
-    return { msg, meta_length: offset, payload_remaining: pSize };
+    return { msg, metaLength: offset, payloadRemaining: pSize };
   }
 
   private pushChunkOnPayload() {
@@ -1043,35 +1043,35 @@ export class BytesToMessages {
       throw new Error("no cur_message to push payload onto");
     }
 
-    if (this.cur_message.payload_remaining !== 0) {
+    if (this.cur_message.payloadRemaining !== 0) {
       if (this.cur_message.msg.payload === undefined) {
         this.cur_message.msg.payload = new Uint8Array(
-          this.cur_message.payload_remaining,
+          this.cur_message.payloadRemaining,
         );
       }
       const payload = this.cur_message.msg.payload;
 
-      while (this.cur_message.payload_remaining && this.cur_size) {
-        let payload_offset = payload.byteLength -
-          this.cur_message.payload_remaining;
+      while (this.cur_message.payloadRemaining && this.cur_size) {
+        const payloadOffset = payload.byteLength -
+          this.cur_message.payloadRemaining;
 
-        let cur_chunk = this.buf[this.start];
-        let read_length = Math.min(
-          cur_chunk.byteLength - this.byte_offset,
-          this.cur_message.payload_remaining,
+        const curChunk = this.buf[this.start];
+        const readLength = Math.min(
+          curChunk.byteLength - this.byte_offset,
+          this.cur_message.payloadRemaining,
         );
 
         payload.set(
-          cur_chunk.slice(this.byte_offset, this.byte_offset + read_length),
-          payload_offset,
+          curChunk.slice(this.byte_offset, this.byte_offset + readLength),
+          payloadOffset,
         );
-        this.cur_message.payload_remaining -= read_length;
-        this.byte_offset += read_length;
+        this.cur_message.payloadRemaining -= readLength;
+        this.byte_offset += readLength;
         this.advanceChunk();
       }
     }
 
-    if (this.cur_message.payload_remaining === 0) {
+    if (this.cur_message.payloadRemaining === 0) {
       if (this.resolveMessage !== undefined) {
         this.resolveMessage({ value: this.cur_message.msg, done: false });
         this.resolveMessage = undefined;
