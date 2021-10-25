@@ -1,5 +1,5 @@
 # Twine Protocol Implementation for Deno
 
-Experimental. Only partial support for transports.
+Experimental implementation of the experimental [twine protocol](https://github.com/teleclimber/twine-protocol).
 
-Includes using twine over unix domain socket.
+Includes using twine over unix domain socket in Deno.
