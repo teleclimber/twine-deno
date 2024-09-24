@@ -1,5 +1,12 @@
 import Twine, { BytesToMessages } from "./twine.ts";
-import { assertEquals } from "https://deno.land/std@0.112.0/testing/asserts.ts";
+import { assertEquals } from "jsr:@std/assert";
+
+// sleep is required becuase we start timers internally and Deno doesn't like hanging timers in tests.
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 Deno.test({
   name: "send incomplete chunk.",
@@ -37,6 +44,8 @@ Deno.test({
 
     m_out = await b2m.next();
     assertEquals(m_out.value?.command, 77);
+
+    await sleep(10);
   },
 });
 
@@ -61,6 +70,8 @@ Deno.test({
 
     m_out = await b2m.next();
     assertEquals(m_out.value?.command, 8);
+
+    await sleep(10);
   },
 });
 
@@ -86,6 +97,8 @@ Deno.test({
 
     m_out = await b2m.next();
     assertEquals(m_out.value?.command, 8);
+
+    await sleep(10);
   },
 });
 
@@ -113,6 +126,8 @@ Deno.test({
 
     m_out = await b2m.next();
     assertEquals(m_out.value?.command, 8);
+
+    await sleep(10);
   },
 });
 
@@ -147,5 +162,7 @@ Deno.test({
 
     m_out = await b2m.next();
     assertEquals(m_out.value?.command, 8);
+
+    await sleep(10);
   },
 });

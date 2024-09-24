@@ -1,9 +1,6 @@
 import Twine from "./twine.ts";
-import * as path from "https://deno.land/std@0.112.0/path/mod.ts";
-import {
-  assert,
-  assertEquals,
-} from "https://deno.land/std@0.112.0/testing/asserts.ts";
+import * as path from "jsr:@std/path";
+import { assert, assertEquals } from "jsr:@std/assert";
 
 Deno.test({
   name: "send",

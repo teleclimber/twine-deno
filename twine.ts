@@ -1,4 +1,5 @@
-import { iter } from "https://deno.land/std@0.112.0/io/util.ts";
+import { iterateReader } from "jsr:@std/io/iterate-reader";
+
 /////////////////////////////////////////////////
 // First pass at Twine.ts:
 
@@ -111,7 +112,7 @@ export default class Twine {
     (async () => {
       if (this.conn === undefined) throw new Error("conn is undefined");
       try {
-        for await (const chunk of iter(this.conn)) {
+        for await (const chunk of iterateReader(this.conn)) {
           this.bytes2messages.push(chunk);
         }
       } catch (e) {
