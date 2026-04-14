@@ -116,10 +116,7 @@ export default class Twine {
           this.bytes2messages.push(chunk);
         }
       } catch (e) {
-        console.log("conn read error. Graceful? " + this._graceful);
-        if (e instanceof Deno.errors.Interrupted && this._graceful) {
-          console.log("Interrupted error while shutting down: not an error");
-        } else {
+        if (!(e instanceof Deno.errors.Interrupted && this._graceful)) {
           throw e;
         }
       }
